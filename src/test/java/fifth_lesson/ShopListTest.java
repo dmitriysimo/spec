@@ -31,7 +31,6 @@ public class ShopListTest {
         page.openStartPage(url);
     }
 
-    @Tag("smoke")
     @ParameterizedTest
     @CsvFileSource(resources = "new items.csv", numLinesToSkip = 1)
     void positiveCheckNewItemCreate(String name, Boolean isNavigate) {
