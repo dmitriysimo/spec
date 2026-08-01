@@ -1,0 +1,62 @@
+name: CI Autotests Run
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  pages: write
+  contents: write
+
+jobs:
+  run-autotests:
+    name: Run Tests and Deploy Report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run tests
+        run: ./gradlew clean test -DincludeTags="smoke" -Dselenide.headless=true
+        continue-on-error: true
+
+
+      # Установка Allure CLI (фиксированная версия 2.30.0)
+      - name: Install Allure
+        run: |
+          wget -qO allure.zip https://github.com/allure-framework/allure2/releases/download/2.30.0/allure-2.30.0.zip
+          unzip -q allure.zip
+          sudo mv allure-2.30.0 /opt/allure
+          sudo ln -sf /opt/allure/bin/allure /usr/local/bin/allure
+
+      # Генерация отчёта из результатов тестов
+      - name: Generate Allure Report
+        run: |
+          allure generate build/allure-results -o allure-report --clean
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure-report
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Add report URL to environment
+        run: echo "Report_URL=https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" > build/allure-results/environment.properties
