@@ -29,7 +29,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Run tests
-        run: ./gradlew clean test -DincludeTags="smoke" -Dselenide.headless=true
+        run: ./gradlew clean test -Dselenide.headless=true
         continue-on-error: true
 
 
